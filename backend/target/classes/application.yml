@@ -1,0 +1,68 @@
+server:
+  port: 8080
+  # 增加服务器超时配置，支持大文件上传
+  tomcat:
+    max-connections: 200
+    accept-count: 100
+    connection-timeout: 60000  # 60秒连接超时
+    max-http-post-size: 5368709120  # 5GB (5 * 1024 * 1024 * 1024)
+    threads:
+      max: 200
+      min-spare: 10
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/agri_trade_db}
+      database: agri_trade_db
+  
+  # 文件上传配置 - 支持大数据上传
+  servlet:
+    multipart:
+      max-file-size: 5GB      # 单个文件最大大小
+      max-request-size: 5GB   # 单次请求最大大小
+      file-size-threshold: 10MB  # 当文件大小超过这个值时写入磁盘，优化内存使用
+      enabled: true           # 启用multipart上传
+      location: ./temp        # 临时文件存储位置
+  
+  # HTTP配置
+  web:
+    resources:
+      cache:
+        use-last-modified: false
+  
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    # 添加对LocalDateTime的支持
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+      accept-single-value-as-array: true
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:agriDataPlatformSecretKey2024SpringBoot}
+  expiration: 86400000 # 24小时
+
+# 跨域配置
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
+
+# 日志配置
+logging:
+  level:
+    com.agridata: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.springframework.web.multipart: DEBUG
+
+# 应用配置
+app:
+  # 文件上传配置
+  upload:
+    path: ./uploads  # 文件上传存储路径，相对于项目根目录 

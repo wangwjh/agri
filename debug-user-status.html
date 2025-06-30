@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户状态调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #cce7ff; border-color: #b3d9ff; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; border-radius: 3px; }
+        .btn-success { background: #28a745; color: white; border: none; border-radius: 3px; }
+        .btn-danger { background: #dc3545; color: white; border: none; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 农业数据平台 - 用户状态调试</h1>
+    
+    <div class="debug-section info">
+        <h3>📋 调试步骤</h3>
+        <button class="btn-primary" onclick="checkLocalStorage()">1. 检查本地存储</button>
+        <button class="btn-primary" onclick="testAdminLogin()">2. 管理员登录</button>
+        <button class="btn-primary" onclick="debugCurrentUser()">3. 调试当前用户</button>
+        <button class="btn-primary" onclick="testAdminStats()">4. 测试管理员API</button>
+        <button class="btn-success" onclick="clearAll()">🧹 清除所有数据</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        function addResult(content, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `debug-section ${type}`;
+            div.innerHTML = content;
+            document.getElementById('results').appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function makeRequest(url, options = {}) {
+            const token = sessionStorage.getItem('token') || localStorage.getItem('testToken');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            try {
+                const response = await fetch(API_BASE + url, {
+                    ...options,
+                    headers
+                });
+                
+                const data = await response.json();
+                return { status: response.status, data };
+            } catch (error) {
+                return { status: 0, error: error.message };
+            }
+        }
+
+        function checkLocalStorage() {
+            addResult('<h3>🔍 检查本地存储状态</h3>', 'info');
+            
+            const token = sessionStorage.getItem('token');
+            const user = sessionStorage.getItem('user');
+            const testToken = localStorage.getItem('testToken');
+            
+            let content = '<h4>SessionStorage:</h4>';
+            content += `<p><strong>Token:</strong> ${token ? '✅ 存在' : '❌ 不存在'}</p>`;
+            content += `<p><strong>User:</strong> ${user ? '✅ 存在' : '❌ 不存在'}</p>`;
+            
+            if (user) {
+                try {
+                    const userObj = JSON.parse(user);
+                    content += `<pre>${JSON.stringify(userObj, null, 2)}</pre>`;
+                } catch (e) {
+                    content += `<p style="color: red;">用户数据解析失败: ${e.message}</p>`;
+                }
+            }
+            
+            content += '<h4>LocalStorage:</h4>';
+            content += `<p><strong>Test Token:</strong> ${testToken ? '✅ 存在' : '❌ 不存在'}</p>`;
+            
+            addResult(content, user && token ? 'success' : 'error');
+        }
+
+        async function testAdminLogin() {
+            addResult('<h3>🔐 测试管理员登录</h3>', 'info');
+            
+            try {
+                const result = await makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (result.status === 200 && result.data.success) {
+                    const { token, user } = result.data.data;
+                    sessionStorage.setItem('token', token);
+                    sessionStorage.setItem('user', JSON.stringify(user));
+                    localStorage.setItem('testToken', token);
+                    
+                    addResult(`✅ 管理员登录成功！<br>
+                        <strong>用户名:</strong> ${user.username}<br>
+                        <strong>角色:</strong> ${user.role}<br>
+                        <strong>状态:</strong> ${user.status}<br>
+                        <pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`⚠️ 登录失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 登录请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function debugCurrentUser() {
+            addResult('<h3>🔍 调试当前用户信息</h3>', 'info');
+            
+            try {
+                const result = await makeRequest('/admin/debug/current-user');
+                
+                if (result.status === 200) {
+                    addResult(`✅ 用户调试信息获取成功<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`⚠️ 调试信息获取失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 调试请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminStats() {
+            addResult('<h3>📊 测试管理员统计API</h3>', 'info');
+            
+            try {
+                const result = await makeRequest('/admin/stats');
+                
+                if (result.status === 200 && result.data.success) {
+                    addResult(`✅ 管理员统计API调用成功<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`⚠️ 统计API调用失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 统计API请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAll() {
+            sessionStorage.clear();
+            localStorage.clear();
+            document.getElementById('results').innerHTML = '';
+            addResult('🧹 所有数据已清除', 'success');
+        }
+
+        // 页面加载时自动检查状态
+        window.onload = function() {
+            addResult('<h3>🚀 页面已加载，开始自动诊断...</h3>', 'info');
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html> 

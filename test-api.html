@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>农业数据平台 API 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+            border-left: 4px solid;
+        }
+        .success { background: #f0f9ff; border-color: #0ea5e9; }
+        .error { background: #fef2f2; border-color: #ef4444; }
+        .loading { background: #fffbeb; border-color: #f59e0b; }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            border: none; 
+            border-radius: 5px; 
+            background: #3b82f6; 
+            color: white; 
+            cursor: pointer; 
+        }
+        button:hover { background: #2563eb; }
+        pre { background: #f3f4f6; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>农业数据平台 API 测试</h1>
+        
+        <div id="results"></div>
+        
+        <h2>测试操作</h2>
+        <button onclick="testBasicConnection()">测试基础连接</button>
+        <button onclick="testAdminStats()">测试管理统计</button>
+        <button onclick="testAssetStats()">测试资产统计</button>
+        <button onclick="testAdminLogin()">测试管理员登录</button>
+        <button onclick="clearResults()">清空结果</button>
+        
+        <h2>手动输入测试</h2>
+        <input type="text" id="customUrl" placeholder="输入API路径 (如: /api/admin/stats)" style="width: 300px; padding: 5px;">
+        <button onclick="testCustomUrl()">测试自定义URL</button>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'loading') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(`http://localhost:8080${url}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                const data = await response.text();
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(data);
+                } catch (e) {
+                    parsedData = data;
+                }
+                
+                return {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: parsedData
+                };
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        async function testBasicConnection() {
+            addResult('🔗 测试基础连接...', 'loading');
+            try {
+                const result = await makeRequest('/');
+                addResult(`✅ 基础连接成功 (${result.status}): ${result.statusText}`, 'success');
+            } catch (error) {
+                addResult(`❌ 基础连接失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAdminLogin() {
+            addResult('🔐 测试管理员登录...', 'loading');
+            try {
+                const result = await makeRequest('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (result.status === 200 && result.data.success) {
+                    localStorage.setItem('testToken', result.data.data.token);
+                    addResult(`✅ 管理员登录成功<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`⚠️ 登录响应异常 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 管理员登录失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAdminStats() {
+            addResult('📊 测试管理统计 API...', 'loading');
+            const token = localStorage.getItem('testToken');
+            
+            if (!token) {
+                addResult('⚠️ 请先登录获取token', 'error');
+                return;
+            }
+            
+            try {
+                const result = await makeRequest('/api/admin/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (result.status === 200) {
+                    addResult(`✅ 管理统计成功<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ 管理统计失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 管理统计失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAssetStats() {
+            addResult('📈 测试资产统计 API...', 'loading');
+            const token = localStorage.getItem('testToken');
+            
+            if (!token) {
+                addResult('⚠️ 请先登录获取token', 'error');
+                return;
+            }
+            
+            try {
+                const result = await makeRequest('/api/admin/assets/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (result.status === 200) {
+                    addResult(`✅ 资产统计成功<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ 资产统计失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 资产统计失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCustomUrl() {
+            const url = document.getElementById('customUrl').value;
+            if (!url) {
+                addResult('⚠️ 请输入URL', 'error');
+                return;
+            }
+            
+            addResult(`🔍 测试自定义URL: ${url}...`, 'loading');
+            const token = localStorage.getItem('testToken');
+            
+            try {
+                const result = await makeRequest(url, {
+                    headers: token ? {
+                        'Authorization': `Bearer ${token}`
+                    } : {}
+                });
+                
+                if (result.status < 400) {
+                    addResult(`✅ 请求成功 (${result.status})<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ 请求失败 (${result.status})<br><pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载时自动测试基础连接
+        window.onload = function() {
+            testBasicConnection();
+        };
+    </script>
+</body>
+</html> 
