@@ -18,21 +18,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // 为所有API路径配置CORS
+        // 为所有API路径配置CORS（包括/api/auth）
         registry.addMapping("/api/**")
-                .allowedOrigins(
-                    "http://localhost:5173",
-                    "http://localhost:3000", 
-                    "https://agriculturedata.netlify.app",
-                    "https://*.netlify.app"
-                )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
-        
-        // 为认证路径配置CORS
-        registry.addMapping("/auth/**")
                 .allowedOrigins(
                     "http://localhost:5173",
                     "http://localhost:3000", 
