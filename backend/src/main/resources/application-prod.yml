@@ -1,0 +1,63 @@
+server:
+  port: ${PORT:8080}
+  tomcat:
+    max-connections: 200
+    accept-count: 100
+    connection-timeout: 60000
+    max-http-post-size: 5368709120  # 5GB
+    threads:
+      max: 200
+      min-spare: 10
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      database: ${MONGO_DATABASE:agri_trade_db}
+  
+  servlet:
+    multipart:
+      max-file-size: 5GB
+      max-request-size: 5GB
+      file-size-threshold: 10MB
+      enabled: true
+      location: ./temp
+  
+  web:
+    resources:
+      cache:
+        use-last-modified: false
+  
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+      accept-single-value-as-array: true
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000
+
+# 跨域配置
+cors:
+  allowed-origins: ${CORS_ORIGINS}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
+
+# 日志配置
+logging:
+  level:
+    com.agridata: INFO
+    org.springframework.data.mongodb: WARN
+    org.springframework.web.multipart: WARN
+
+# 应用配置
+app:
+  upload:
+    path: ./uploads 

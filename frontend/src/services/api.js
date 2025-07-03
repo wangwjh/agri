@@ -1,7 +1,16 @@
 import axios from 'axios'
 
+// 根据环境变量决定API基础URL
+const getBaseURL = () => {
+  // 在生产环境中使用环境变量，开发环境使用代理
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  return '/api'
+}
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 60000, // 增加到60秒，适合一般请求
   headers: {
     'Content-Type': 'application/json'
@@ -10,7 +19,7 @@ const api = axios.create({
 
 // 创建专用于文件上传的API实例，具有更长的超时时间
 const uploadApi = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 1800000, // 30分钟超时，适用于超大文件上传
   headers: {
     'Content-Type': 'multipart/form-data'
@@ -22,7 +31,7 @@ const uploadApi = axios.create({
 
 // 创建专用于文件下载的API实例
 const downloadApi = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 1800000, // 30分钟超时，适用于大文件下载
   headers: {
     'Content-Type': 'application/json'
