@@ -2,6 +2,7 @@ package com.agridata.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -14,6 +15,35 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
     private RequestLoggingInterceptor requestLoggingInterceptor;
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        // 为所有API路径配置CORS
+        registry.addMapping("/api/**")
+                .allowedOrigins(
+                    "http://localhost:5173",
+                    "http://localhost:3000", 
+                    "https://agriculturedata.netlify.app",
+                    "https://*.netlify.app"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+        
+        // 为认证路径配置CORS
+        registry.addMapping("/auth/**")
+                .allowedOrigins(
+                    "http://localhost:5173",
+                    "http://localhost:3000", 
+                    "https://agriculturedata.netlify.app",
+                    "https://*.netlify.app"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
