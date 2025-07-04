@@ -23,8 +23,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                     "http://localhost:5173",
                     "http://localhost:3000", 
-                    "https://agriculturedata.netlify.app",
-                    "https://*.netlify.app"
+                    "https://agriculturedata.netlify.app"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
