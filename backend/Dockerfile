@@ -21,5 +21,5 @@ RUN mvn clean package -DskipTests
 # 暴露端口
 EXPOSE 8080
 
-# 启动应用
-CMD ["java", "-jar", "target/agri-data-platform-1.0.0.jar"] 
+# 启动应用，使用生产环境配置
+CMD ["java", "-jar", "-Dspring.profiles.active=prod", "target/agri-data-platform-1.0.0.jar"] 
