@@ -28,7 +28,6 @@ import java.util.Map;
 @ControllerAdvice
 @RestController
 @RequestMapping("/api/debug")
-@CrossOrigin(origins = "*")
 public class ErrorHandlerController {
 
     private static final Logger logger = LoggerFactory.getLogger(ErrorHandlerController.class);

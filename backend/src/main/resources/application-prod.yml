@@ -12,7 +12,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${MONGO_URI}
+      uri: ${SPRING_DATA_MONGODB_URI}
       database: ${MONGO_DATABASE:agri_trade_db}
   
   servlet:

@@ -32,7 +32,6 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api/upload")
-@CrossOrigin(origins = "*")
 public class FileUploadController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileUploadController.class);
